@@ -95,7 +95,7 @@ circleBtn.addEventListener("click", () => {
 grandBtn.addEventListener("click", () => {
   unlockAudio();
   activeMode = "grand";
-  grandIndex = 0;
+  grandIndex = 1; // 最初の床は虹なので、次の床からシーケンスを開始
 
   startTimer(GRAND_INTERVAL, () => {
     const floor = GRAND_SEQUENCE[grandIndex];
