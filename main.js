@@ -25,7 +25,7 @@ let activeMode = "none"; // none | circle | grand
 let timerId = null;
 let remainingTime = 0;
 let warningPlayed = false;
-let grandIndex = 0;
+let grandIndex = 1;
 
 // ===== 音声再生のロック解除 =====
 function unlockAudio() {
