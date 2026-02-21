@@ -27,6 +27,18 @@ let remainingTime = 0;
 let warningPlayed = false;
 let grandIndex = 0;
 
+// ===== 音声再生のロック解除 =====
+function unlockAudio() {
+  Object.values(audioMap).forEach(audio => {
+    audio.muted = true;
+    audio.play().then(() => {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+    }).catch(() => {});
+  });
+}
+
 // ===== タイマー開始関数 =====
 function startTimer(interval, getNextFloor) {
   if (timerId !== null) clearInterval(timerId);
@@ -73,6 +85,7 @@ function startTimer(interval, getNextFloor) {
 
 // ===== サークルカラミティボタン =====
 circleBtn.addEventListener("click", () => {
+  unlockAudio();
   activeMode = "circle";
 
   startTimer(CIRCLE_INTERVAL, () => "yellow");
@@ -80,6 +93,7 @@ circleBtn.addEventListener("click", () => {
 
 // ===== グランドカラミティボタン =====
 grandBtn.addEventListener("click", () => {
+  unlockAudio();
   activeMode = "grand";
   grandIndex = 0;
 
