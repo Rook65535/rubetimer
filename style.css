@@ -1,3 +1,34 @@
 body {
   font-family: sans-serif;
 }
+
+/* ===== ボタン共通 ===== */
+button {
+  font-size: 24px;
+  padding: 16px 24px;
+  margin: 8px;
+  cursor: pointer;
+}
+
+/* カラミティボタンを強調 */
+#circleBtn,
+#grandBtn {
+  font-size: 28px;
+  padding: 20px 32px;
+}
+
+#nextFloor {
+  font-size: 22px;
+  margin: 12px 0;
+}
+
+/* 色定義 */
+.floor-yellow {
+  color: orange;
+  font-weight: bold;
+}
+
+.floor-rainbow {
+  color: purple; /* 虹の代用 */
+  font-weight: bold;
+}
