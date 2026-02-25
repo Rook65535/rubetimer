@@ -1,7 +1,7 @@
 // ===== 設定値 =====
-const CIRCLE_INTERVAL1 = 23;
-const CIRCLE_INTERVAL2 = 20;
-const GRAND_INTERVAL = 23;
+const CIRCLE_INTERVAL1 = 23.;
+const CIRCLE_INTERVAL2 = 20.8;
+const GRAND_INTERVAL = 23.43;
 const WARNING_TIME = 5;
 const GRAND_SEQUENCE = ["rainbow", "rainbow", "yellow"];
 
