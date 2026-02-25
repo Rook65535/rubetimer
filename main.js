@@ -1,6 +1,7 @@
 // ===== 設定値 =====
-const CIRCLE_INTERVAL = 43;
-const GRAND_INTERVAL = 18;
+const CIRCLE_INTERVAL1 = 23;
+const CIRCLE_INTERVAL2 = 20;
+const GRAND_INTERVAL = 23;
 const WARNING_TIME = 5;
 const GRAND_SEQUENCE = ["rainbow", "rainbow", "yellow"];
 
@@ -41,11 +42,12 @@ function unlockAudio() {
 }
 
 // ===== タイマー開始関数 =====
-function startTimer(interval, getNextFloor) {
+function startTimer(initialInterval, getNextFloor, isVariableInterval=false) {
   if (timerId !== null) clearInterval(timerId);
 
-  const intervalMs = interval * 1000;
+  let intervalMs = initialInterval * 1000;
   let endTime = Date.now() + intervalMs;
+  let toggle = false; // サークルカラミティ用の20/23秒切替フラグ
 
   currentFloor = getNextFloor();
   updateNextFloorDisplay();
@@ -61,28 +63,28 @@ function startTimer(interval, getNextFloor) {
     // 表示（0.01秒単位）
     timerText.textContent = remainingSec.toFixed(2) + "秒";
 
-    // ===== 警告：初めてWARNING_TIMEを下回った瞬間 =====
-    if (
-      remainingSec <= WARNING_TIME &&
-      !warningPlayed &&
-      remainingSec > 0
-    ) {
+    // ===== 警告 =====
+    if (remainingSec <= WARNING_TIME && !warningPlayed && remainingSec > 0) {
       warningText.style.display = "block";
-
       audioMap[currentFloor].currentTime = 0;
       audioMap[currentFloor].play();
-
-
       warningPlayed = true;
     }
 
-    // ===== 床発生 =====
+    // ===== 床発光 =====
     if (remainingMs <= 0) {
       warningText.style.display = "none";
 
+      // 次周期の床を決定
       currentFloor = getNextFloor();
       updateNextFloorDisplay();
-      
+
+      // 次周期の間隔を切り替え（サークルカラミティのみ）
+      if (isVariableInterval) {
+        toggle = !toggle;
+        intervalMs = (toggle ? 20 : 23) * 1000; // 20秒 or 23秒
+      }
+
       // 次周期
       endTime = Date.now() + intervalMs;
       warningPlayed = false;
@@ -108,7 +110,7 @@ circleBtn.addEventListener("click", () => {
   unlockAudio();
   activeMode = "circle";
 
-  startTimer(CIRCLE_INTERVAL, () => "yellow");
+  startTimer(CIRCLE_INTERVAL1, () => "yellow", true);
 });
 
 // ===== グランドカラミティボタン =====
@@ -118,10 +120,10 @@ grandBtn.addEventListener("click", () => {
   grandIndex = 0; // 最初の床は虹なので、次の床からシーケンスを開始
 
   startTimer(GRAND_INTERVAL, () => {
-    grandIndex = (grandIndex + 1) % GRAND_SEQUENCE.length;
     const floor = GRAND_SEQUENCE[grandIndex];
+    grandIndex = (grandIndex + 1) % GRAND_SEQUENCE.length;
     return floor;
-    });
+  }, false); // 固定間隔なので false
 });
 
 // ===== リセットボタン =====
