@@ -125,7 +125,7 @@ function updateNextFloorDisplay() {
 circleBtn.addEventListener("click", () => {
   unlockAudio();
   activeMode = "circle";
-  circleIndex = 1;
+  circleIndex = 0;
 
   startTimer(CIRCLE_FLOORS[circleIndex].interval, () => {
     const floor = CIRCLE_FLOORS[circleIndex].name;
