@@ -1,6 +1,12 @@
 // ===== 設定値 =====
-const CIRCLE_INTERVAL1 = 23.63;
-const CIRCLE_INTERVAL2 = 21;
+const CIRCLE_FLOORS = [
+  { name: "安置", interval: 23.4 },
+  { name: "安置", interval: 20.8 },
+  { name: "逆", interval: 23.4 },
+  { name: "安置", interval: 20.8 },
+  { name: "太い", interval: 25 },
+  { name: "逆", interval: 20.8 },
+];
 const GRAND_INTERVAL = 23;
 const WARNING_TIME = 5;
 const GRAND_SEQUENCE = ["rainbow", "rainbow", "yellow"];
@@ -9,6 +15,7 @@ const GRAND_SEQUENCE = ["rainbow", "rainbow", "yellow"];
 const audioMap = {
   yellow: new Audio("audio/yellow_floor.wav"),
   rainbow: new Audio("audio/rainbow_floor.wav"),
+  // 必要なら安置・逆・太い用もここに追加
 };
 
 Object.values(audioMap).forEach(a => a.preload = "auto");
@@ -24,10 +31,10 @@ const nextFloorText = document.getElementById("nextFloor");
 // ===== 状態管理 =====
 let activeMode = "none"; // none | circle | grand
 let timerId = null;
-let remainingTime = 0;
 let warningPlayed = false;
 let grandIndex = 0;
-let currentFloor = null; // "yellow" | "rainbow" | null
+let currentFloor = null; // 床名文字列
+let circleIndex = 0;     // サークルカラミティのサイクルインデックス
 
 // ===== 音声再生のロック解除 =====
 function unlockAudio() {
@@ -42,18 +49,16 @@ function unlockAudio() {
 }
 
 // ===== タイマー開始関数 =====
-function startTimer(initialInterval, getNextFloor, isVariableInterval=false) {
+function startTimer(initialInterval, getNextFloor) {
   if (timerId !== null) clearInterval(timerId);
 
   let intervalMs = initialInterval * 1000;
   let endTime = Date.now() + intervalMs;
-  let toggle = false; // サークルカラミティ用の20/23秒切替フラグ
 
   currentFloor = getNextFloor();
   updateNextFloorDisplay();
 
   warningPlayed = false;
-  warningText.style.display = "none";
 
   timerId = setInterval(() => {
     const now = Date.now();
@@ -64,12 +69,18 @@ function startTimer(initialInterval, getNextFloor, isVariableInterval=false) {
     timerText.textContent = remainingSec.toFixed(2) + "秒";
 
     // ===== 警告 =====
-    if (remainingSec <= WARNING_TIME && !warningPlayed && remainingSec > 0) {
-      warningText.style.display = "block";
-      audioMap[currentFloor].currentTime = 0;
-      audioMap[currentFloor].play();
-      warningPlayed = true;
-    }
+    // ===== 警告 =====
+if (remainingSec <= WARNING_TIME && !warningPlayed && remainingSec > 0) {
+  warningText.style.display = "block";
+
+  // 音声再生（安置・逆・太い床用があれば audioMap[currentFloor] を使う）
+  if (audioMap[currentFloor]) {
+    audioMap[currentFloor].currentTime = 0;
+    audioMap[currentFloor].play();
+  }
+
+  warningPlayed = true;
+}
 
     // ===== 床発光 =====
     if (remainingMs <= 0) {
@@ -79,10 +90,11 @@ function startTimer(initialInterval, getNextFloor, isVariableInterval=false) {
       currentFloor = getNextFloor();
       updateNextFloorDisplay();
 
-      // 次周期の間隔を切り替え（サークルカラミティのみ）
-      if (isVariableInterval) {
-        toggle = !toggle;
-        intervalMs = (toggle ? 20 : 23) * 1000; // 20秒 or 23秒
+      // 次周期の間隔を設定
+      if (activeMode === "circle") {
+        intervalMs = CIRCLE_FLOORS[circleIndex].interval * 1000;
+      } else if (activeMode === "grand") {
+        intervalMs = GRAND_INTERVAL * 1000;
       }
 
       // 次周期
@@ -92,6 +104,7 @@ function startTimer(initialInterval, getNextFloor, isVariableInterval=false) {
   }, 10); // 0.01秒更新
 }
 
+// ===== 次の床表示 =====
 function updateNextFloorDisplay() {
   if (currentFloor === "yellow") {
     nextFloorText.textContent = "次の床：黄";
@@ -99,6 +112,9 @@ function updateNextFloorDisplay() {
   } else if (currentFloor === "rainbow") {
     nextFloorText.textContent = "次の床：虹";
     nextFloorText.style.color = "purple";
+  } else if (["安置","逆","太い"].includes(currentFloor)) {
+    nextFloorText.textContent = "次の床：" + currentFloor;
+    nextFloorText.style.color = "black";
   } else {
     nextFloorText.textContent = "次の床：--";
     nextFloorText.style.color = "black";
@@ -109,21 +125,26 @@ function updateNextFloorDisplay() {
 circleBtn.addEventListener("click", () => {
   unlockAudio();
   activeMode = "circle";
+  circleIndex = 5;
 
-  startTimer(CIRCLE_INTERVAL1, () => "yellow", true);
+  startTimer(CIRCLE_FLOORS[circleIndex].interval, () => {
+    const floor = CIRCLE_FLOORS[circleIndex].name;
+    circleIndex = (circleIndex + 1) % CIRCLE_FLOORS.length;
+    return floor;
+  });
 });
 
 // ===== グランドカラミティボタン =====
 grandBtn.addEventListener("click", () => {
   unlockAudio();
   activeMode = "grand";
-  grandIndex = 0; // 最初の床は虹なので、次の床からシーケンスを開始
+  grandIndex = 0;
 
   startTimer(GRAND_INTERVAL, () => {
     const floor = GRAND_SEQUENCE[grandIndex];
     grandIndex = (grandIndex + 1) % GRAND_SEQUENCE.length;
     return floor;
-  }, false); // 固定間隔なので false
+  });
 });
 
 // ===== リセットボタン =====
@@ -134,12 +155,12 @@ resetBtn.addEventListener("click", () => {
   }
 
   activeMode = "none";
-  remainingTime = 0;
   warningPlayed = false;
   grandIndex = 0;
+  circleIndex = 0;
+  currentFloor = null;
 
   nextFloorText.textContent = "次の床：--";
-
   timerText.textContent = "未発動";
   warningText.style.display = "none";
 });
